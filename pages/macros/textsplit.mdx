@@ -1,0 +1,100 @@
+# Textsplit
+
+You can use the ```TEXTSPLIT``` formula to divide your text based on a specified character. This formula returns a dynamic array containing the split text.
+
+For example, the formula below works perfectly when applied to a single cell:
+
+```scala
+=TEXTSPLIT(Text, Delimiter)
+```
+
+Unfortunately, you cannot combine this with the ```MAP``` or ```BYROW``` functions, as doing so would create a 3D array, which Excel cannot handle, resulting in a ```#CALC``` error by default.
+
+To address this limitation, I created the following macro, which takes an array of strings and a delimiter to achieve the desired result:
+
+```vb
+Function TEXTSPLITRANGE(Text As Variant, Delimiter As String) As Variant
+
+    'Array to hold the results after splitting the text.
+    Dim SplittedValues() As Variant
+    
+    'Array to store the transposed values from the input range.
+    Dim Values As Variant
+    
+    'Transpose the input range into a one-dimensional array.
+    Values = Application.WorksheetFunction.Transpose(Text)
+    
+    Dim MaximumNumberOfDelimitedItems As Integer
+    
+    'Get the maximum number of items that can be split from the input values.
+    MaximumNumberOfDelimitedItems = GetMaximumNumberOfDelimitedItems(Values, Delimiter)
+    
+    'Determine the total number of values in the input range.
+    Dim NumValues As Integer
+    NumValues = UBound(Values)
+    
+    'Resize the SplittedValues array to hold the split results.
+    ReDim SplittedValues(NumValues - 1)
+    
+    Dim ValueSplitArray() As String
+    
+    'Loop through each value in the input range, splitting it by the delimiter.
+    For ValueIndex = 1 To NumValues
+    
+        Dim TextValue As String
+        TextValue = Values(ValueIndex)
+        
+        'Initialize the array for split values with a default size.
+        ReDim ValueSplitArray(MaximumNumberOfDelimitedItems)
+        
+        'Check if the current value contains the delimiter.
+        If InStr(TextValue, Delimiter) > 0 Then
+    
+            Dim ValueSplit() As String
+            
+            'Split the current value using the specified delimiter.
+            ValueSplit = Split(TextValue, Delimiter)
+            
+            'Store the split results in the ValueSplitArray.
+            For ValueSplitIndex = 0 To UBound(ValueSplit)
+                ValueSplitArray(ValueSplitIndex) = ValueSplit(ValueSplitIndex)
+            Next ValueSplitIndex
+            
+            'Save the split results to the output array, adjusting for the index.
+            SplittedValues(ValueIndex - 1) = ValueSplitArray
+            
+        Else
+        
+            'If no delimiter is found, store the original value in the first position of the array.
+            ValueSplitArray(0) = TextValue
+            SplittedValues(ValueIndex - 1) = ValueSplitArray
+            
+        End If
+    
+    Next ValueIndex
+
+    TEXTSPLITRANGE = SplittedValues
+
+End Function
+
+Private Function GetMaximumNumberOfDelimitedItems(Text As Variant, Delimiter As String) As Integer
+    
+    Dim MaximumNumberOfDelimitedItems As Integer
+    
+    'Loop through each text value to find the maximum number of delimited items.
+    For TextIndex = 1 To UBound(Text)
+    
+        Dim NumberOfDelimitedItems As Integer
+        NumberOfDelimitedItems = Len(Text(TextIndex)) - Len(Replace(Text(TextIndex), Delimiter, ""))
+    
+        'Update the maximum count if the current value has more delimited items.
+        If NumberOfDelimitedItems > MaximumNumberOfDelimitedItems Then
+            MaximumNumberOfDelimitedItems = NumberOfDelimitedItems
+        End If
+    
+    Next TextIndex
+
+    GetMaximumNumberOfDelimitedItems = MaximumNumberOfDelimitedItems
+
+End Function
+```
