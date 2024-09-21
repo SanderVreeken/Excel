@@ -1,0 +1,22 @@
+# Repeat Sequence
+
+There are two ways to repeat the values in a column.
+
+- **N**: The number of times you wish to repeat the range.
+- **Range**: The range you actually want to repeat.
+
+You can either repeat each value N times before moving to the next item.
+
+Example: `A, A, A, A, B, B, B, B, C, C, C, C`
+
+```scala
+=TOCOL(IF(SEQUENCE(, N), Range))
+```
+
+Or, you can repeat the entire list N times.
+
+Example: `A, B, C, D, A, B, C, D, A, B, C, D`
+
+```scala
+=TOCOL(IF(SEQUENCE(, N), Range),, TRUE)
+```
